@@ -42,8 +42,11 @@ class AppState: ObservableObject {
     let audioRecorder: AudioRecorder
     let injector: InjectorService
     let historyManager: HistoryManager
+    let soundService: SoundService
     
+    let overlayModel = RecordingOverlayModel()
     private var historyWindow: NSWindow?
+    private var overlayWindow: NSWindow?
     
     init() {
         self.historyManager = HistoryManager()
@@ -51,6 +54,7 @@ class AppState: ObservableObject {
         self.inputMonitor = GlobalInputMonitor()
         self.audioRecorder = AudioRecorder()
         self.injector = InjectorService()
+        self.soundService = SoundService()
         
         self.inputMonitor.onFnPressed = { [weak self] in
             Task { await self?.startRecording() }
@@ -61,6 +65,13 @@ class AppState: ObservableObject {
         }
         
         self.inputMonitor.start()
+        
+        // Setup volume callback
+        Task {
+            await self.audioRecorder.setVolumeHandler { [weak self] level in
+                self?.overlayModel.updateLevel(level)
+            }
+        }
     }
     
     func showHistory() {
@@ -87,29 +98,76 @@ class AppState: ObservableObject {
         historyWindow?.orderFrontRegardless()
     }
     
+    private func showOverlay() {
+        if overlayWindow == nil {
+            let contentView = RecordingOverlayView(viewModel: overlayModel)
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 150, height: 48),
+                styleMask: [.borderless],
+                backing: .buffered,
+                defer: false
+            )
+            window.level = .floating
+            window.backgroundColor = .clear
+            window.isOpaque = false
+            window.hasShadow = false // View has its own shadow
+            window.isReleasedWhenClosed = false
+            
+            let hostingView = NSHostingView(rootView: contentView)
+            hostingView.wantsLayer = true
+            hostingView.layer?.backgroundColor = NSColor.clear.cgColor
+            
+            // Position at bottom center
+            if let screen = NSScreen.main {
+                let screenRect = screen.visibleFrame
+                let windowRect = window.frame
+                let x = screenRect.midX - (windowRect.width / 2)
+                let y = screenRect.minY + 50 // 50px from bottom
+                window.setFrameOrigin(NSPoint(x: x, y: y))
+            }
+            
+            window.contentView = hostingView
+            self.overlayWindow = window
+        }
+        
+        overlayWindow?.orderFront(nil)
+    }
+    
+    private func hideOverlay() {
+        overlayWindow?.orderOut(nil)
+    }
+    
     func clearHistory() {
         historyManager.clear()
     }
     
     func startRecording() async {
         guard !isRecording else { return }
+        isRecording = true
         
         let granted = await audioRecorder.checkPermission()
         guard granted else {
             print("Microphone permission denied")
+            isRecording = false
             return
         }
         
         do {
+            soundService.playStartRecording()
+            showOverlay()
             try await audioRecorder.startRecording()
-            isRecording = true
         } catch {
             print("Failed to start recording: \(error)")
+            isRecording = false
+            hideOverlay()
         }
     }
     
     func stopRecordingAndTranscribe() async {
         guard isRecording else { return }
+        
+        soundService.playStopRecording()
+        hideOverlay() // Hide immediately for responsiveness
         
         let buffer = await audioRecorder.stopRecording()
         isRecording = false

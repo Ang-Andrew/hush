@@ -27,6 +27,11 @@ actor AudioRecorder {
     }
     
     func startRecording() throws {
+        if isRecording {
+            print("AudioRecorder: Already recording")
+            return
+        }
+    
         self.audioBuffer.removeAll()
         
         let inputNode = engine.inputNode
@@ -39,7 +44,7 @@ actor AudioRecorder {
         }
         self.converter = converter
         
-        inputNode.installTap(onBus: 0, bufferSize: 4096, format: hardwareFormat) { [weak self] (buffer, time) in
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: hardwareFormat) { [weak self] (buffer, time) in
              // Extract data to a standard array or copy it to avoid Sendable issues
              guard let channelData = buffer.floatChannelData else { return }
              let channelPointer = channelData[0]
@@ -58,6 +63,11 @@ actor AudioRecorder {
     }
     
     func stopRecording() -> [Float] {
+        if !isRecording {
+            print("AudioRecorder: Not recording")
+            return []
+        }
+    
         engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         isRecording = false
@@ -65,7 +75,29 @@ actor AudioRecorder {
         return audioBuffer
     }
     
+    // Callback for volume updates (0.0 to 1.0)
+    var onVolumeUpdate: (@MainActor (Float) -> Void)?
+    
+    func setVolumeHandler(_ handler: @escaping @MainActor (Float) -> Void) {
+        self.onVolumeUpdate = handler
+    }
+    
     private func processRawBuffer(_ inputFloats: [Float]) {
+        // Calculate RMS for visualization
+        if !inputFloats.isEmpty {
+            let sumSquares = inputFloats.reduce(0) { $0 + $1 * $1 }
+            let rms = sqrt(sumSquares / Float(inputFloats.count))
+            // Boost signal: Square root helps lift small values, or simple gain
+            let boosted = rms * 20.0
+            let level = min(max(boosted, 0), 1.0) 
+            
+            if let handler = self.onVolumeUpdate {
+                Task { @MainActor [level] in
+                    handler(level)
+                }
+            }
+        }
+
         guard let converter = self.converter, let format = self.inputFormat else { return }
         
         // Re-wrap input into a buffer for the converter (inefficient but safe for now)
