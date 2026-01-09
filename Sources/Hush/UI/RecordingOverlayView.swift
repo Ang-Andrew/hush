@@ -22,8 +22,6 @@ struct RecordingOverlayView: View {
         .frame(height: 32)
         .padding(8)
         .glassEffect(.clear, in: .capsule)  // .clear variant = high transparency
-        .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)  // Softer, tighter shadow
-        .background(Color.clear)  // Explicit clear background
         .compositingGroup()  // Flatten to prevent rendering artifacts
     }
 }

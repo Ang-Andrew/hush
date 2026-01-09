@@ -121,7 +121,6 @@ class AppState: ObservableObject {
             let hostingView = NSHostingView(rootView: contentView)
             hostingView.wantsLayer = true
             hostingView.layer?.backgroundColor = .clear
-            hostingView.layer?.masksToBounds = false  // Allow shadow to show
 
             window.contentView = hostingView
 
