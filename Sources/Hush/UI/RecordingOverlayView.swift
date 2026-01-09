@@ -3,7 +3,7 @@ import SwiftUI
 
 struct RecordingOverlayView: View {
     @ObservedObject var viewModel: RecordingOverlayModel
-    
+
     var body: some View {
         HStack(alignment: .center, spacing: 4) {
             ForEach(0..<viewModel.barCount, id: \.self) { index in
@@ -21,42 +21,10 @@ struct RecordingOverlayView: View {
         }
         .frame(height: 32)
         .padding(8)
-        .background {
-            // "Liquid Glass 2.0" (Tahoe Emulation)
-            ZStack {
-                // 1. Base Refraction
-                VisualEffectBlur(material: .underWindowBackground, blendingMode: .behindWindow, state: .active)
-                
-                // 2. Optical Tint (Subtle Cyan/Blue tint of thick glass)
-                Color(nsColor: .cyan).opacity(0.05)
-                
-                // 3. Volumetric Glow (Top-down lighting)
-                LinearGradient(
-                    colors: [.white.opacity(0.4), .white.opacity(0.05)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-            .clipShape(Capsule())
-        }
-        .overlay(
-            // 4. Prismatic Rim (Thick, light-catching edge)
-            Capsule()
-                .strokeBorder(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .white.opacity(0.9), location: 0.2), // Highlight top-left
-                            .init(color: .white.opacity(0.1), location: 0.5),
-                            .init(color: .white.opacity(0.5), location: 0.9)  // Catch light bottom-right
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1.5
-                )
-        )
-        // 5. Deep Ambient Shadow for Lift
-        .shadow(color: .black.opacity(0.25), radius: 15, x: 0, y: 8)
+        .glassEffect(.clear, in: .capsule)  // .clear variant = high transparency
+        .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)  // Softer, tighter shadow
+        .background(Color.clear)  // Explicit clear background
+        .compositingGroup()  // Flatten to prevent rendering artifacts
     }
 }
 

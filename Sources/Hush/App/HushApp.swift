@@ -101,6 +101,8 @@ class AppState: ObservableObject {
     private func showOverlay() {
         if overlayWindow == nil {
             let contentView = RecordingOverlayView(viewModel: overlayModel)
+
+            // Create truly transparent window
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 150, height: 48),
                 styleMask: [.borderless],
@@ -112,24 +114,29 @@ class AppState: ObservableObject {
             window.isOpaque = false
             window.hasShadow = false // View has its own shadow
             window.isReleasedWhenClosed = false
-            
+            window.ignoresMouseEvents = true  // Let clicks pass through
+            window.collectionBehavior = [.canJoinAllSpaces, .stationary]  // Always visible
+
+            // Create hosting view with no background
             let hostingView = NSHostingView(rootView: contentView)
             hostingView.wantsLayer = true
-            hostingView.layer?.backgroundColor = NSColor.clear.cgColor
-            
-            // Position at bottom center
+            hostingView.layer?.backgroundColor = .clear
+            hostingView.layer?.masksToBounds = false  // Allow shadow to show
+
+            window.contentView = hostingView
+
+            // Position at bottom center - calculate after setting content
             if let screen = NSScreen.main {
                 let screenRect = screen.visibleFrame
-                let windowRect = window.frame
-                let x = screenRect.midX - (windowRect.width / 2)
-                let y = screenRect.minY + 50 // 50px from bottom
+                window.setFrame(NSRect(x: 0, y: 0, width: 150, height: 48), display: false)
+                let x = screenRect.midX - (150 / 2)  // Use explicit width for accurate centering
+                let y = screenRect.minY + 30  // Lower position - 30px from bottom
                 window.setFrameOrigin(NSPoint(x: x, y: y))
             }
-            
-            window.contentView = hostingView
+
             self.overlayWindow = window
         }
-        
+
         overlayWindow?.orderFront(nil)
     }
     

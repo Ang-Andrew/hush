@@ -1,5 +1,5 @@
 import Foundation
-import AVFoundation
+@preconcurrency import AVFoundation
 
 actor AudioRecorder {
     private let engine = AVAudioEngine()
