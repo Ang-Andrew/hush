@@ -2,7 +2,7 @@
 
 **Hush** is a lightning-fast, privacy-first voice dictation tool for macOS. Inspired by Wispr Flow, it allows you to speak into any text field simply by holding the `Fn` key. 
 
-Everything happens locally on your device using the Apple Neural Engine—no audio is ever sent to the cloud.
+Everything happens locally on your device using the Apple Neural Engine. No audio is ever sent to the cloud.
 
 ![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)
 ![Platform](https://img.shields.io/badge/Platform-macOS%2014+-lightgrey.svg)
