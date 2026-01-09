@@ -1,6 +1,6 @@
 # Hush 🤫
 
-**Hush** is a lightning-fast, privacy-first voice dictation tool for macOS. Inspired by Wispr Flow, it allows you to speak into any text field simply by holding the `Fn` key.
+**Hush** is a privacy-first voice dictation tool for macOS. Inspired by Wispr Flow, it allows you to speak into any text field by holding the `Fn` key.
 
 Everything happens locally on your device using the Apple Neural Engine. No audio is ever sent to the cloud.
 
@@ -10,12 +10,12 @@ Everything happens locally on your device using the Apple Neural Engine. No audi
 
 ## Features
 
-- **⚡️ Sub-Second Transcription:** Optimized with Whisper tiny.en model for <1s latency on most recordings
-- **💎 Liquid Glass UI:** Beautiful macOS Tahoe-style translucent recording overlay using official `.glassEffect()` API
-- **🔒 Private & Local:** All inference runs on-device using `whisper.cpp` and CoreML. Your voice data never leaves your machine
-- **🍎 Native & Lightweight:** Built in pure Swift & SwiftUI. Optimized for Apple Silicon with multi-threaded processing
-- **📝 Universal:** Works in ANY application—Notes, VS Code, Browser, Slack, Terminal, etc.
-- **📋 Smart Injection:** Automatically pastes transcribed text at your cursor position
+- **⚡️ Fast Transcription:** Uses Whisper tiny.en model for <1s latency on most recordings
+- **💎 Liquid Glass UI:** macOS Tahoe-style translucent recording overlay using `.glassEffect()` API
+- **🔒 Private & Local:** All inference runs on-device using `whisper.cpp` and CoreML. Your voice data stays on your machine
+- **🍎 Native:** Built in Swift & SwiftUI with multi-threaded processing for Apple Silicon
+- **📝 Universal:** Works in any application—Notes, VS Code, Browser, Slack, Terminal, etc.
+- **📋 Auto-paste:** Transcribed text is automatically pasted at your cursor position
 
 ## Requirements
 
@@ -61,7 +61,7 @@ swift build
 
 1. **Launch Hush** - You'll see a waveform icon in your menu bar
 2. **Place your cursor** in any text input field
-3. **Press and HOLD the `Fn` key** - A beautiful liquid glass overlay appears at the bottom of your screen
+3. **Press and HOLD the `Fn` key** - A liquid glass overlay appears at the bottom of your screen
 4. **Speak** your message
 5. **Release the `Fn` key** - Text is transcribed and automatically pasted
 6. **View History** - Click the menu bar icon to access previous transcriptions
