@@ -51,12 +51,12 @@ actor WhisperActor {
             return nil
         }
         let context = wrapper.context
-        
+
         var params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY)
         params.print_realtime = false
         params.print_progress = false
         params.print_timestamps = false
-        params.single_segment = true
+        params.single_segment = false  // Enable multi-segment for better long-audio performance
         
         // CoreML is often enabled by checking if the CoreML model exists alongside. 
         // whisper.cpp automatically prioritizes CoreML if the mlmodelc is present in the same dir.
