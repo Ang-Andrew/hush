@@ -121,16 +121,37 @@ actor AudioRecorder {
             outStatus.pointee = .haveData
             return inputBuffer
         }
-        
+
         let status = converter.convert(to: outputBuffer, error: &error, withInputFrom: inputCallback)
-        
-        if status != .error, let channelData = outputBuffer.floatChannelData {
-            let channelPointer = channelData[0]
-            let outCount = Int(outputBuffer.frameLength)
-            if audioBuffer.count + outCount < 4_800_000 {
-                 let floats = UnsafeBufferPointer(start: channelPointer, count: outCount)
-                 audioBuffer.append(contentsOf: floats)
-            }
+
+        if let conversionError = error {
+            print("Audio conversion error: \(conversionError)")
+            return
+        }
+
+        if status == .error {
+            print("Audio converter status: error")
+            return
+        }
+
+        guard let channelData = outputBuffer.floatChannelData else {
+            print("No channel data in output buffer")
+            return
+        }
+
+        let channelPointer = channelData[0]
+        let outCount = Int(outputBuffer.frameLength)
+
+        if outCount == 0 {
+            print("Output buffer has 0 frames")
+            return
+        }
+
+        if audioBuffer.count + outCount < 4_800_000 {
+            let floats = UnsafeBufferPointer(start: channelPointer, count: outCount)
+            audioBuffer.append(contentsOf: floats)
+        } else {
+            print("Audio buffer limit reached")
         }
     }
 }
