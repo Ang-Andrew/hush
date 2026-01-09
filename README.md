@@ -10,7 +10,7 @@ Everything happens locally on your device using the Apple Neural Engine. No audi
 
 ## Features
 
-- **⚡️ Fast Transcription:** Uses Whisper tiny.en model for <1s latency on most recordings
+- **⚡️ Fast Transcription:** Uses Whisper tiny.en model with 1-2s total latency for typical recordings
 - **💎 Liquid Glass UI:** macOS Tahoe-style translucent recording overlay using `.glassEffect()` API
 - **🔒 Private & Local:** All inference runs on-device using `whisper.cpp` and CoreML. Your voice data stays on your machine
 - **🍎 Native:** Built in Swift & SwiftUI with multi-threaded processing for Apple Silicon
@@ -69,11 +69,11 @@ swift build
 ## Performance
 
 Typical latency on Apple Silicon (M1):
-- **3-4 second recording:** ~0.5-0.7s transcription time
-- **6-8 second recording:** ~0.8-1.2s transcription time
-- **15+ second recording:** ~2-3s transcription time
+- **Short (1-4s):** ~0.6-1.0s transcription, ~1.0-1.5s total
+- **Medium (5-7s):** ~0.8-1.4s transcription, ~1.2-1.9s total
+- **Long (10-20s):** ~1.8-2.7s transcription, ~2.2-3.2s total
 
-Total latency from release to paste is typically under 1 second for short recordings.
+Total latency includes transcription + paste time.
 
 ## How It Works
 
