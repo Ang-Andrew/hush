@@ -36,8 +36,9 @@ struct HistoryMenuButton: View {
 @MainActor
 class AppState: ObservableObject {
     @Published var isRecording = false
-    
-    let whisperActor: WhisperActor
+
+    // let whisperActor: WhisperActor  // Kept for easy switching back
+    let speechRecognizer: SpeechRecognizer
     let inputMonitor: GlobalInputMonitor
     let audioRecorder: AudioRecorder
     let injector: InjectorService
@@ -50,7 +51,8 @@ class AppState: ObservableObject {
     
     init() {
         self.historyManager = HistoryManager()
-        self.whisperActor = WhisperActor()
+        // self.whisperActor = WhisperActor()  // Kept for easy switching back
+        self.speechRecognizer = SpeechRecognizer()
         self.inputMonitor = GlobalInputMonitor()
         self.audioRecorder = AudioRecorder()
         self.injector = InjectorService()
@@ -78,7 +80,7 @@ class AppState: ObservableObject {
         if historyWindow == nil {
             let contentView = HistoryView()
                 .environmentObject(self.historyManager)
-            
+
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 400, height: 600),
                 styleMask: [.titled, .closable, .resizable, .miniaturizable],
@@ -89,10 +91,12 @@ class AppState: ObservableObject {
             window.title = "Dictation History"
             window.isReleasedWhenClosed = false
             window.center()
-            window.contentView = NSHostingView(rootView: contentView)
+
+            let hostingView = NSHostingView(rootView: contentView)
+            window.contentView = hostingView
             self.historyWindow = window
         }
-        
+
         NSApp.activate(ignoringOtherApps: true)
         historyWindow?.makeKeyAndOrderFront(nil)
         historyWindow?.orderFrontRegardless()
@@ -149,6 +153,7 @@ class AppState: ObservableObject {
     
     func startRecording() async {
         guard !isRecording else { return }
+        print("🟢 START: Recording starting...")
         isRecording = true
         
         let granted = await audioRecorder.checkPermission()
@@ -170,29 +175,70 @@ class AppState: ObservableObject {
     }
     
     func stopRecordingAndTranscribe() async {
-        guard isRecording else { return }
-        
+        let logMsg1 = "🛑 stopRecordingAndTranscribe called, isRecording=\(isRecording)\n"
+        if let data = logMsg1.data(using: .utf8) {
+            try? data.write(to: URL(fileURLWithPath: "/tmp/hush-speech.log"), options: .atomic)
+        }
+
+        guard isRecording else {
+            let logMsg2 = "⚠️ Not recording, returning early\n"
+            if let data = logMsg2.data(using: .utf8) {
+                if let fileHandle = try? FileHandle(forWritingTo: URL(fileURLWithPath: "/tmp/hush-speech.log")) {
+                    fileHandle.seekToEndOfFile()
+                    fileHandle.write(data)
+                    try? fileHandle.close()
+                }
+            }
+            return
+        }
+
         soundService.playStopRecording()
         hideOverlay() // Hide immediately for responsiveness
-        
+
         let buffer = await audioRecorder.stopRecording()
         isRecording = false
-        
+
+        let logMsg3 = "🔴 STOP: Recording stopped with \(buffer.count) samples. Starting transcription...\n"
+        if let data = logMsg3.data(using: .utf8) {
+            if let fileHandle = try? FileHandle(forWritingTo: URL(fileURLWithPath: "/tmp/hush-speech.log")) {
+                fileHandle.seekToEndOfFile()
+                fileHandle.write(data)
+                try? fileHandle.close()
+            }
+        }
+
         let startTime = Date()
-        // print("Recording stopped. Starting transcription...")
-        
-        if let text = await whisperActor.transcribe(audioBuffer: buffer), !text.isEmpty {
+        print("🔴 STOP: Recording stopped with \(buffer.count) samples. Starting transcription...")
+
+        // Using Apple SFSpeechRecognizer
+        if let text = await speechRecognizer.transcribe(audioBuffer: buffer), !text.isEmpty {
+            print("🟢 SUCCESS: Got transcription: '\(text)'")
             let transcriptionEnd = Date()
             let transcriptionDuration = transcriptionEnd.timeIntervalSince(startTime)
             print("Transcription Latency: \(String(format: "%.3f", transcriptionDuration))s")
-            
+
             await injector.inject(text: text)
-            
+
             let totalEnd = Date()
             let totalDuration = totalEnd.timeIntervalSince(startTime)
             print("Total Latency (End of Record -> Paste): \(String(format: "%.3f", totalDuration))s")
-            
+
             historyManager.add(text: text)
         }
+
+        // Whisper version (commented out for easy switching):
+        // if let text = await whisperActor.transcribe(audioBuffer: buffer), !text.isEmpty {
+        //     let transcriptionEnd = Date()
+        //     let transcriptionDuration = transcriptionEnd.timeIntervalSince(startTime)
+        //     print("Transcription Latency: \(String(format: "%.3f", transcriptionDuration))s")
+        //
+        //     await injector.inject(text: text)
+        //
+        //     let totalEnd = Date()
+        //     let totalDuration = totalEnd.timeIntervalSince(startTime)
+        //     print("Total Latency (End of Record -> Paste): \(String(format: "%.3f", totalDuration))s")
+        //
+        //     historyManager.add(text: text)
+        // }
     }
 }

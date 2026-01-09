@@ -3,7 +3,7 @@ import AppKit
 
 struct HistoryView: View {
     @EnvironmentObject var historyManager: HistoryManager
-    
+
     var body: some View {
         List {
             ForEach(historyManager.transcripts) { item in
@@ -28,16 +28,16 @@ struct HistoryView: View {
 struct TranscriptRow: View {
     let item: Transcript
     @State private var isExpanded = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(item.timestamp, format: .dateTime.hour().minute())
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                
+
                 Spacer()
-                
+
                 Button(action: {
                     let pasteboard = NSPasteboard.general
                     pasteboard.clearContents()
@@ -47,7 +47,7 @@ struct TranscriptRow: View {
                 }
                 .buttonStyle(.plain)
             }
-            
+
             Text(item.text)
                 .lineLimit(isExpanded ? nil : 2)
                 .onTapGesture {
@@ -56,6 +56,6 @@ struct TranscriptRow: View {
                     }
                 }
         }
-        .padding(.vertical, 4)
+        .padding()
     }
 }
